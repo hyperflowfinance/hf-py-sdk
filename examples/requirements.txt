@@ -1,0 +1,3 @@
+# Install the published SDK from PyPI (includes the websocket extra for
+# subscriptions). Then run:  python examples/app.py
+hf-py-sdk[subscriptions]>=0.1.1
