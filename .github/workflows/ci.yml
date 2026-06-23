@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install codegen
+        run: pip install ariadne-codegen
+
+      - name: Generate client from live schema
+        run: python codegen/generate.py
+        env:
+          HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
+          HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
+          HYPERFLOW_API_URL: ${{ vars.HYPERFLOW_API_URL }}
+
+      - name: Install package and smoke-test imports
+        run: |
+          pip install -e .
+          python -c "import hyperflow; from hyperflow import connect; print('ok')"

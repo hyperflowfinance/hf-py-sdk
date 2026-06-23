@@ -1,0 +1,28 @@
+# Generated GraphQL client (regenerated on the fly from the live schema at build time).
+/src/hyperflow/
+
+# Local environment configuration.
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

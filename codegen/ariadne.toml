@@ -1,0 +1,22 @@
+# ariadne-codegen configuration.
+# Run from the repository root: ariadne-codegen --config codegen/ariadne.toml
+# Paths below are relative to the repository root.
+[tool.ariadne-codegen]
+# Default introspection endpoint. Override at generation time with the
+# HYPERFLOW_API_URL env var (see codegen/generate.py). Optional introspection
+# auth: HYPERFLOW_AUTH_HEADER / HYPERFLOW_AUTH_VALUE.
+remote_schema_url = "https://api.hyperflowlabs.com/ethereum/graphql"
+
+# Generate a fully typed query/mutation builder for the whole API,
+# so no hand-written .graphql operation files are required.
+enable_custom_operations = true
+async_client = true
+
+target_package_name = "hyperflow"
+target_package_path = "src"
+client_name = "Client"
+include_comments = "none"
+convert_to_snake_case = true
+
+# Ship the committed convenience layer (connect()) inside the package.
+files_to_include = ["codegen/include/_client.py"]

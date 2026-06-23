@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hf-py-sdk"
+dynamic = ["version"]
+description = "Typed async Python client for the HyperFlow GraphQL API."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = ["hyperflow", "graphql", "client", "sdk", "ethereum"]
+dependencies = [
+    "pydantic>=2.7",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+subscriptions = ["websockets>=12"]
+
+[project.urls]
+Homepage = "https://hyperflowlabs.com"
+Source = "https://github.com/hyperflowfinance/hf-py-sdk"
+
+[dependency-groups]
+codegen = ["ariadne-codegen>=0.15"]
+
+# Version is derived from git tags (e.g. v1.2.3 -> 1.2.3).
+[tool.hatch.version]
+source = "vcs"
+
+# The package is generated and gitignored, so force-include it in the build.
+[tool.hatch.build]
+artifacts = ["src/hyperflow/**"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hyperflow"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/hyperflow", "codegen", "README.md", "LICENSE"]
