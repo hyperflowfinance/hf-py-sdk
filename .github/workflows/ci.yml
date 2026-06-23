@@ -23,9 +23,9 @@ jobs:
       - name: Generate client from live schema
         run: python codegen/generate.py
         env:
-          HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
+          HYPERFLOW_API_URL: ${{ secrets.HYPERFLOW_API_URL }}
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
-          HYPERFLOW_API_URL: ${{ vars.HYPERFLOW_API_URL }}
+          HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
 
       - name: Install package and smoke-test imports
         run: |
