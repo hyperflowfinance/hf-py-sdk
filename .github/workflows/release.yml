@@ -28,7 +28,7 @@ jobs:
         run: python codegen/generate.py
         env:
           # Public endpoint needs no key; auth vars are optional.
-          HYPERFLOW_API_URL: ${{ secrets.HYPERFLOW_API_URL }}
+          HYPERFLOW_API_URL: https://api.hyperflowlabs.com/graphql
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
           HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
 

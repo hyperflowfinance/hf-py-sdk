@@ -39,7 +39,7 @@ Configuration (argument → env var → default):
 
 | Argument | Env var | Default |
 | --- | --- | --- |
-| `url` | `HYPERFLOW_API_URL` | Ethereum endpoint |
+| `url` | `HYPERFLOW_API_URL` | `https://api.hyperflowlabs.com/graphql` |
 | `auth_header` | `HYPERFLOW_AUTH_HEADER` | `Authorization` |
 | `auth_value` | `HYPERFLOW_AUTH_VALUE` | _(none — no auth)_ |
 

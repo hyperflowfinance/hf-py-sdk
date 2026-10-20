@@ -18,7 +18,7 @@ import httpx
 from .client import Client
 
 # Default endpoint. Override to target a different network/deployment.
-DEFAULT_URL = "https://api.hyperflowlabs.com/ethereum/graphql"
+DEFAULT_URL = "https://api.hyperflowlabs.com/graphql"
 
 # Environment variable names.
 ENV_URL = "HYPERFLOW_API_URL"

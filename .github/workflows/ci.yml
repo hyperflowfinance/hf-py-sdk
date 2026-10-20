@@ -6,18 +6,8 @@ on:
     branches: ["main"]
 
 jobs:
-  test:
+  build-client:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Oldest supported Python with the minimum declared dependencies.
-          - python: "3.10"
-            deps: >-
-              "graphql-core==3.2.*" "httpx==0.27.*" "pydantic==2.7.*" "websockets==15.0"
-          - python: "3.13"
-            deps: ""
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,21 +15,51 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.12"
 
       - name: Install codegen
-        run: pip install "ariadne-codegen==0.19.0"
+        run: pip install "ariadne-codegen==0.19.0" build
 
       - name: Generate client from live schema
         run: python codegen/generate.py
         env:
-          HYPERFLOW_API_URL: ${{ secrets.HYPERFLOW_API_URL }}
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
           HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
 
-      # Install the built package (not editable) so packaging gaps fail the tests.
-      - name: Install package
-        run: pip install ".[subscriptions]" ${{ matrix.deps }}
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdk-wheel
+          path: dist/*.whl
+
+  test:
+    needs: build-client
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.10"
+            deps: >-
+              "graphql-core==3.2.*" "httpx==0.27.*" "pydantic==2.7.*" "websockets==15.0"
+          - python: "3.13"
+            deps: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-wheel
+          path: dist
+
+      - name: Install built package
+        run: pip install "$(ls dist/*.whl)[subscriptions]" ${{ matrix.deps }}
 
       - name: Run tests
         run: python -m unittest discover -s tests -v
