@@ -13,6 +13,7 @@ nothing is saved to disk except the generated, gitignored ``src/hyperflow`` pack
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -28,6 +29,11 @@ ENV_AUTH_HEADER = "HYPERFLOW_AUTH_HEADER"
 ENV_AUTH_VALUE = "HYPERFLOW_AUTH_VALUE"
 
 
+def _toml_str(value: str) -> str:
+    """Quote a TOML basic string; JSON string escapes are valid TOML escapes."""
+    return json.dumps(value)
+
+
 def _build_config() -> str:
     """Write a config with env overrides applied and return its path."""
     text = BASE_CONFIG.read_text(encoding="utf-8")
@@ -35,13 +41,13 @@ def _build_config() -> str:
     if url:
         text = re.sub(
             r"(?m)^remote_schema_url\s*=.*$",
-            f'remote_schema_url = "{url}"',
+            lambda _: f"remote_schema_url = {_toml_str(url)}",
             text,
         )
     value = os.getenv(ENV_AUTH_VALUE)
     if value:
         header = os.getenv(ENV_AUTH_HEADER) or "Authorization"
-        text += f'\nremote_schema_headers = {{ "{header}" = "{value}" }}\n'
+        text += f"\nremote_schema_headers = {{ {_toml_str(header)} = {_toml_str(value)} }}\n"
     fd, path = tempfile.mkstemp(suffix=".toml")
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -54,13 +60,15 @@ def _run(config: str, *args: str) -> None:
     subprocess.run(cmd, cwd=ROOT, check=True)
 
 
-def _expose_connect() -> None:
-    """Re-export the convenience factory at the package top level."""
-    init = ROOT / "src" / "hyperflow" / "__init__.py"
+def _finish_package() -> None:
+    """Re-export connect() and mark the package as typed (PEP 561)."""
+    package = ROOT / "src" / "hyperflow"
+    init = package / "__init__.py"
     line = "from ._client import connect"
     text = init.read_text(encoding="utf-8")
     if line not in text:
         init.write_text(f"{text.rstrip()}\n{line}\n", encoding="utf-8")
+    (package / "py.typed").touch()
 
 
 def main() -> int:
@@ -70,7 +78,7 @@ def main() -> int:
         _run(config)  # introspects live schema, writes src/hyperflow
     finally:
         os.unlink(config)
-    _expose_connect()
+    _finish_package()
     print("Generation complete: src/hyperflow")
     return 0
 

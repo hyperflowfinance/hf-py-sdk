@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
+
+import httpx
 
 from .client import Client
 
@@ -22,6 +24,21 @@ DEFAULT_URL = "https://api.hyperflowlabs.com/ethereum/graphql"
 ENV_URL = "HYPERFLOW_API_URL"
 ENV_AUTH_HEADER = "HYPERFLOW_AUTH_HEADER"  # header name, e.g. "Authorization"
 ENV_AUTH_VALUE = "HYPERFLOW_AUTH_VALUE"  # header value, e.g. "Bearer <token>"
+
+
+class _HeaderClient(Client):
+    """Sends the configured headers on every request, so they also apply to a
+    caller-supplied ``http_client`` without mutating that shared client."""
+
+    async def execute(
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        kwargs["headers"] = {**(self.headers or {}), **(kwargs.get("headers") or {})}
+        return await super().execute(query, operation_name, variables, **kwargs)
 
 
 def connect(
@@ -55,4 +72,4 @@ def connect(
     # Derive the websocket endpoint (http->ws, https->wss) for subscriptions.
     kwargs.setdefault("ws_url", re.sub(r"^http", "ws", url))
     kwargs.setdefault("ws_headers", merged)
-    return Client(url=url, headers=merged, **kwargs)
+    return _HeaderClient(url=url, headers=merged, **kwargs)

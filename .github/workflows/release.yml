@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build dependencies
-        run: pip install ariadne-codegen build
+        run: pip install "ariadne-codegen==0.19.0" build
 
       - name: Generate client from live schema
         run: python codegen/generate.py
@@ -34,6 +34,11 @@ jobs:
 
       - name: Build sdist and wheel
         run: python -m build
+
+      - name: Test the built wheel before publishing
+        run: |
+          pip install "$(ls dist/*.whl)[subscriptions]"
+          python -m unittest discover -s tests -v
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

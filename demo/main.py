@@ -33,10 +33,10 @@ subscription NewBlocks {
 async def fetch_metadata(client) -> None:
     data = await client.query(
         Query.metadata().fields(
-            MetadataFields.chain_id,
-            MetadataFields.eth_block_number,
-            MetadataFields.eth_gas_price,
-            MetadataFields.client_version,
+            MetadataFields.chain_id(),
+            MetadataFields.eth_block_number(),
+            MetadataFields.eth_gas_price(),
+            MetadataFields.client_version(),
         ),
         operation_name="GetMetadata",
     )

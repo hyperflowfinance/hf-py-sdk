@@ -6,19 +6,29 @@ on:
     branches: ["main"]
 
 jobs:
-  generate:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Oldest supported Python with the minimum declared dependencies.
+          - python: "3.10"
+            deps: >-
+              "graphql-core==3.2.*" "httpx==0.27.*" "pydantic==2.7.*" "websockets==15.0"
+          - python: "3.13"
+            deps: ""
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # tags for hatch-vcs
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
 
       - name: Install codegen
-        run: pip install ariadne-codegen
+        run: pip install "ariadne-codegen==0.19.0"
 
       - name: Generate client from live schema
         run: python codegen/generate.py
@@ -27,7 +37,9 @@ jobs:
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
           HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
 
-      - name: Install package and smoke-test imports
-        run: |
-          pip install -e .
-          python -c "import hyperflow; from hyperflow import connect; print('ok')"
+      # Install the built package (not editable) so packaging gaps fail the tests.
+      - name: Install package
+        run: pip install ".[subscriptions]" ${{ matrix.deps }}
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v

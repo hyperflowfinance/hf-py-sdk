@@ -13,18 +13,21 @@ keywords = ["hyperflow", "graphql", "client", "sdk", "ethereum"]
 dependencies = [
     "pydantic>=2.7",
     "httpx>=0.27",
-    "graphql-core>=3.2",
+    # ariadne-codegen 0.19 builds list-based ASTs that graphql-core 3.3 rejects.
+    "graphql-core>=3.2,<3.3",
 ]
 
 [project.optional-dependencies]
-subscriptions = ["websockets>=12"]
+# The generated transport needs the asyncio websockets client (15.0+).
+subscriptions = ["websockets>=15"]
 
 [project.urls]
 Homepage = "https://hyperflowlabs.com"
 Source = "https://github.com/hyperflowfinance/hf-py-sdk"
 
 [dependency-groups]
-codegen = ["ariadne-codegen>=0.15"]
+# Pinned: generated code must match the version tested in CI before release.
+codegen = ["ariadne-codegen==0.19.0"]
 
 # Version is derived from git tags (e.g. v1.2.3 -> 1.2.3).
 [tool.hatch.version]

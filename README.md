@@ -18,14 +18,19 @@ pip install hf-py-sdk
 ```python
 import asyncio
 from hyperflow import connect
+from hyperflow.custom_fields import MetadataFields
+from hyperflow.custom_queries import Query
 
 async def main():
     # Reads HYPERFLOW_API_URL / HYPERFLOW_AUTH_HEADER / HYPERFLOW_AUTH_VALUE
     # from the environment, with arguments taking precedence.
-    client = connect()
-    # ...or pass explicitly:
-    # client = connect(url="...", auth_header="Authorization", auth_value="Bearer X")
-    # result = await client.query(...)
+    async with connect() as client:
+        data = await client.query(
+            Query.metadata().fields(MetadataFields.chain_id()),
+            operation_name="GetMetadata",
+        )
+        print(data)
+    # ...or pass explicitly: connect(url="...", auth_header="Authorization", auth_value="Bearer X")
 
 asyncio.run(main())
 ```
@@ -40,13 +45,21 @@ Configuration (argument → env var → default):
 
 Copy `.env.example` to `.env` to set these locally.
 
+Auth and `headers=` are sent on every request, including when you pass your own
+`http_client=httpx.AsyncClient(...)` (that client is not modified).
+Subscriptions need `pip install "hf-py-sdk[subscriptions]"` (websockets 15+).
+
 ## Regenerate the client locally
 
 ```bash
-pip install ariadne-codegen
+pip install "ariadne-codegen==0.19.0"
 python codegen/generate.py
-pip install -e .
+pip install ".[subscriptions]"
+python -m unittest discover -s tests
 ```
+
+`ariadne-codegen` is pinned so the published code matches what CI tested; its
+generated code needs `graphql-core<3.3`, so the SDK caps that dependency too.
 
 This generates the typed package into `src/hyperflow/` (gitignored) on the fly,
 straight from the live schema — nothing else is written to disk. The builder reads
@@ -77,3 +90,4 @@ a `pypi` environment in the GitHub repository settings.
 | `codegen/generate.py` | Builder: dump schema + generate client |
 | `codegen/include/_client.py` | `connect()` convenience layer (shipped in the package) |
 | `src/hyperflow/` | Generated client (gitignored) |
+| `tests/` | Behavioural tests, run against the generated package |
