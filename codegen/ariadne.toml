@@ -5,7 +5,7 @@
 # Default introspection endpoint. Override at generation time with the
 # HYPERFLOW_API_URL env var (see codegen/generate.py). Optional introspection
 # auth: HYPERFLOW_AUTH_HEADER / HYPERFLOW_AUTH_VALUE.
-remote_schema_url = "https://api.hyperflowlabs.com/ethereum/graphql"
+remote_schema_url = "https://api.hyperflowlabs.com/graphql"
 
 # Generate a fully typed query/mutation builder for the whole API,
 # so no hand-written .graphql operation files are required.

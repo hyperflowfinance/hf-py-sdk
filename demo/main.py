@@ -6,7 +6,7 @@ Setup:
     pip install "hf-py-sdk[subscriptions]"
 
 Run against the public endpoint (no key needed):
-    set HYPERFLOW_API_URL=https://api.hyperflow.finance/ethereum/graphql   # Windows
+    set HYPERFLOW_API_URL=https://api.hyperflowlabs.com/graphql   # Windows
     python demo/main.py
 
 For the key-protected default endpoint, set HYPERFLOW_AUTH_VALUE (and
@@ -33,10 +33,10 @@ subscription NewBlocks {
 async def fetch_metadata(client) -> None:
     data = await client.query(
         Query.metadata().fields(
-            MetadataFields.chain_id,
-            MetadataFields.eth_block_number,
-            MetadataFields.eth_gas_price,
-            MetadataFields.client_version,
+            MetadataFields.chain_id(),
+            MetadataFields.eth_block_number(),
+            MetadataFields.eth_gas_price(),
+            MetadataFields.client_version(),
         ),
         operation_name="GetMetadata",
     )
