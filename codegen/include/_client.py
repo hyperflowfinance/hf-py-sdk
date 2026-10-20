@@ -37,7 +37,10 @@ class _HeaderClient(Client):
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> httpx.Response:
-        kwargs["headers"] = {**(self.headers or {}), **(kwargs.get("headers") or {})}
+        # httpx.Headers accepts mappings and (name, value) pairs; per-request wins.
+        merged = httpx.Headers(self.headers or {})
+        merged.update(httpx.Headers(kwargs.get("headers") or {}))
+        kwargs["headers"] = merged
         return await super().execute(query, operation_name, variables, **kwargs)
 
 
