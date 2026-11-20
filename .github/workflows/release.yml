@@ -1,8 +1,27 @@
 name: Release
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Stage SDK preview {0}', inputs.preview_version) || format('Release {0}', github.ref_name) }}
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      preview_version:
+        description: "Deterministic public PyPI preview version"
+        required: true
+        type: string
+      schema_hash:
+        required: true
+        type: string
+      captured_at:
+        required: true
+        type: string
+      schema_sdl_url:
+        required: true
+        type: string
+      schema_introspection_url:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -24,7 +43,23 @@ jobs:
       - name: Install build dependencies
         run: pip install "ariadne-codegen==0.19.0" build
 
+      - name: Download and verify stage schema
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SCHEMA_HASH: ${{ inputs.schema_hash }}
+          SCHEMA_SDL_URL: ${{ inputs.schema_sdl_url }}
+          SCHEMA_INTROSPECTION_URL: ${{ inputs.schema_introspection_url }}
+        run: bash scripts/fetch-stage-schema.sh
+
+      - name: Generate client from stage schema
+        if: github.event_name == 'workflow_dispatch'
+        run: python codegen/generate.py
+        env:
+          HYPERFLOW_SCHEMA_PATH: stage-schema.graphql
+          HYPERFLOW_DEFAULT_API_URL: https://stage.api.hyperflowlabs.com/graphql
+
       - name: Generate client from live schema
+        if: github.event_name == 'push'
         run: python codegen/generate.py
         env:
           # Public endpoint needs no key; auth vars are optional.
@@ -32,13 +67,30 @@ jobs:
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
           HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
 
-      - name: Build sdist and wheel
+      - name: Build stage preview
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.preview_version }}
+        run: bash scripts/build-preview.sh
+
+      - name: Build stable release
+        if: github.event_name == 'push'
         run: python -m build
 
       - name: Test the built wheel before publishing
+        env:
+          HYPERFLOW_EXPECTED_API_URL: ${{ github.event_name == 'workflow_dispatch' && 'https://stage.api.hyperflowlabs.com/graphql' || 'https://api.hyperflowlabs.com/graphql' }}
         run: |
           pip install "$(ls dist/*.whl)[subscriptions]"
           python -m unittest discover -s tests -v
 
+      - name: Check for existing preview
+        id: preview
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ inputs.preview_version }}
+        run: bash scripts/check-pypi-preview.sh
+
       - name: Publish to PyPI
+        if: github.event_name == 'push' || steps.preview.outputs.exists != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1

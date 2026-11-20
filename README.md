@@ -62,8 +62,8 @@ python -m unittest discover -s tests
 generated code needs `graphql-core<3.3`, so the SDK caps that dependency too.
 
 This generates the typed package into `src/hyperflow/` (gitignored) on the fly,
-straight from the live schema — nothing else is written to disk. The builder reads
-the same env vars as the runtime client (`HYPERFLOW_API_URL`, and optionally
+from live introspection or a local SDL snapshot — nothing else is committed.
+The builder reads the same env vars as the runtime client (`HYPERFLOW_API_URL`, and optionally
 `HYPERFLOW_AUTH_HEADER` / `HYPERFLOW_AUTH_VALUE` for private endpoints), falling
 back to the defaults in `codegen/ariadne.toml`.
 
@@ -81,6 +81,12 @@ package (version derived from the tag), and publishes it to PyPI using OIDC
 trusted publishing. Configure a
 [trusted publisher](https://docs.pypi.org/trusted-publishers/) for this repo and
 a `pypi` environment in the GitHub repository settings.
+
+## Stage previews
+
+Find preview versions via `consumers.sdk_previews.url` in `https://d2ykgs71sjxp8n.cloudfront.net/schema/latest.json`, then install:
+`pip install --pre "hf-py-sdk==<version>"`. Previews default to stage; stable
+versions default to production; `HYPERFLOW_API_URL` overrides either.
 
 ## Layout
 
