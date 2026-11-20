@@ -88,6 +88,11 @@ Find preview versions via `consumers.sdk_previews.url` in `https://d2ykgs71sjxp8
 `pip install --pre "hf-py-sdk==<version>"`. Previews default to stage; stable
 versions default to production; `HYPERFLOW_API_URL` overrides either.
 
+Verify the installed version against the manifest, run `python -m unittest discover -s tests`,
+then smoke-test a read-only query against stage with
+`HYPERFLOW_API_URL=https://stage.api.hyperflowlabs.com/graphql`. Promote only after
+the stage query succeeds; stable tags remain production-default.
+
 ## Layout
 
 | Path | Purpose |
