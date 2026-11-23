@@ -1,15 +1,4 @@
-"""Builder: introspect the GraphQL API and generate the typed `hyperflow` package.
-
-Usage (from the repository root):
-    python codegen/generate.py
-
-The endpoint and optional introspection auth are read from the same env vars the
-runtime client uses (HYPERFLOW_API_URL / HYPERFLOW_AUTH_HEADER / HYPERFLOW_AUTH_VALUE),
-falling back to the defaults in ``codegen/ariadne.toml``.
-
-The client is generated on the fly straight from the live schema (introspection);
-nothing is saved to disk except the generated, gitignored ``src/hyperflow`` package.
-"""
+"""Generate the typed package from local SDL or live schema introspection."""
 
 from __future__ import annotations
 
@@ -27,6 +16,8 @@ BASE_CONFIG = ROOT / "codegen" / "ariadne.toml"
 ENV_URL = "HYPERFLOW_API_URL"
 ENV_AUTH_HEADER = "HYPERFLOW_AUTH_HEADER"
 ENV_AUTH_VALUE = "HYPERFLOW_AUTH_VALUE"
+ENV_SCHEMA_PATH = "HYPERFLOW_SCHEMA_PATH"
+ENV_DEFAULT_URL = "HYPERFLOW_DEFAULT_API_URL"
 
 
 def _toml_str(value: str) -> str:
@@ -37,8 +28,15 @@ def _toml_str(value: str) -> str:
 def _build_config() -> str:
     """Write a config with env overrides applied and return its path."""
     text = BASE_CONFIG.read_text(encoding="utf-8")
+    schema_path = os.getenv(ENV_SCHEMA_PATH)
+    if schema_path:
+        text = re.sub(r"(?m)^remote_schema_url\s*=.*\n?", "", text)
+        path = Path(schema_path)
+        if not path.is_absolute():
+            path = ROOT / path
+        text += f"\nschema_path = {_toml_str(str(path.resolve()))}\n"
     url = os.getenv(ENV_URL)
-    if url:
+    if url and not schema_path:
         text = re.sub(
             r"(?m)^remote_schema_url\s*=.*$",
             lambda _: f"remote_schema_url = {_toml_str(url)}",
@@ -68,6 +66,17 @@ def _finish_package() -> None:
     text = init.read_text(encoding="utf-8")
     if line not in text:
         init.write_text(f"{text.rstrip()}\n{line}\n", encoding="utf-8")
+    endpoint = os.getenv(ENV_DEFAULT_URL)
+    if endpoint:
+        client = package / "_client.py"
+        text, count = re.subn(
+            r'(?m)^DEFAULT_URL = .+$',
+            f"DEFAULT_URL = {_toml_str(endpoint)}",
+            client.read_text(encoding="utf-8"),
+        )
+        if count != 1:
+            raise RuntimeError("Could not set generated client default endpoint")
+        client.write_text(text, encoding="utf-8")
     (package / "py.typed").touch()
 
 
