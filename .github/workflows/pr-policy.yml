@@ -13,6 +13,10 @@ jobs:
   pr-policy:
     name: PR Policy
     uses: hyperflowfinance/.github/.github/workflows/policy.yml@main
+    secrets:
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+      JIRA_USER: ${{ secrets.JIRA_USER }}
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
     permissions:
       contents: read
       pull-requests: read
